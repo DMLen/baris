@@ -21,7 +21,7 @@ export function ResultFragment({ result }) {
 
       <div style={{ flex: 1, textAlign: 'left' }}>
           <div><strong>Image ID:</strong> {img.id}</div>
-          <div><strong>Hamming Distance:</strong> {result.hammingDistance} - <strong>Similarity:</strong> {result.similarityPct}%</div>
+          <div><strong>Hamming Distance:</strong> {result.hammingDistance}</div>
           <div><strong>Origin:</strong> {img.origin}</div>
           <div>{img.width} × {img.height}</div>
 

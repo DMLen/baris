@@ -31,14 +31,12 @@ async function findPhashMatchesBrute(iPhash, threshold, limit) {
 
     const hammingDistance = dist(iPhash, storedPhash);
     const hashLength = Math.max(iPhash.length, storedPhash.length) || 1;
-    const similarity = ((hashLength - hammingDistance) / hashLength) * 100;
-    const similarityPct = Number(similarity.toFixed(2));
 
     if (hammingDistance <= threshold) {
-      matches.push({ image: img, hammingDistance, similarityPct });
-      console.log(`DEBUG: Found match - Image ID: ${img.id}, Stored Phash: ${storedPhash}, Hamming Distance: ${hammingDistance}, Similarity: ${similarityPct}%`);
+      matches.push({image: img, hammingDistance});
+      console.log(`DEBUG: Found match - Image ID: ${img.id}, Stored Phash: ${storedPhash}, Hamming Distance: ${hammingDistance}`);
     } else {
-      console.log(`DEBUG: No match - Image ID: ${img.id}, Stored Phash: ${storedPhash}, Hamming Distance: ${hammingDistance}, Similarity: ${similarityPct}%`);
+      console.log(`DEBUG: No match - Image ID: ${img.id}, Stored Phash: ${storedPhash}, Hamming Distance: ${hammingDistance}`);
     }
   }
   
