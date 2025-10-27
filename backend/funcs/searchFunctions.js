@@ -15,7 +15,7 @@ const Hashes = db.hashes;
 //iPhash = input perceptual hash
 //threshold = max hamming distance for returned matches
 //limit = max number of returned matches (will return closest matches up to this number)
-async function findPhashMatchesBrute(iPhash, threshold = 5, limit = 10) {
+async function findPhashMatchesBrute(iPhash, threshold, limit) {
   const images = await Images.findAll({ include: [{ model: Hashes, as: 'hashes' }] });
   const matches = [];
 
@@ -30,11 +30,15 @@ async function findPhashMatchesBrute(iPhash, threshold = 5, limit = 10) {
     if (!storedPhash) continue;
 
     const hammingDistance = dist(iPhash, storedPhash);
+    const hashLength = Math.max(iPhash.length, storedPhash.length) || 1;
+    const similarity = ((hashLength - hammingDistance) / hashLength) * 100;
+    const similarityPct = Number(similarity.toFixed(2));
+
     if (hammingDistance <= threshold) {
-      matches.push({ image: img, hammingDistance });
-      console.log(`DEBUG: Found match - Image ID: ${img.id}, Stored Phash: ${storedPhash}, Hamming Distance: ${hammingDistance}`);
+      matches.push({ image: img, hammingDistance, similarityPct });
+      console.log(`DEBUG: Found match - Image ID: ${img.id}, Stored Phash: ${storedPhash}, Hamming Distance: ${hammingDistance}, Similarity: ${similarityPct}%`);
     } else {
-      console.log(`DEBUG: No match - Image ID: ${img.id}, Stored Phash: ${storedPhash}, Hamming Distance: ${hammingDistance}`);
+      console.log(`DEBUG: No match - Image ID: ${img.id}, Stored Phash: ${storedPhash}, Hamming Distance: ${hammingDistance}, Similarity: ${similarityPct}%`);
     }
   }
   
