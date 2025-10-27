@@ -26,10 +26,11 @@ async function saveThumb(buffer) {
   const thumbDir = path.join(__dirname, '..', 'img', 'thumb');
   await fs.promises.mkdir(thumbDir, { recursive: true });
   const filename = `${Date.now()}_thumb.jpg`;
-  const thumbPath = path.join(thumbDir, filename);
-  await sharp(buffer).resize(100, 100).jpeg({ quality: 80 }).toFile(thumbPath);
-  console.log("DEBUG: Thumbnail saved at", thumbPath);
-  return thumbPath;
+  const thumbFullPath = path.join(thumbDir, filename);
+  await sharp(buffer).resize(100, 100).jpeg({ quality: 80 }).toFile(thumbFullPath);
+  const webPath = `/img/thumb/${filename}`;
+  console.log("DEBUG: Thumbnail saved at", thumbFullPath, " -> web path:", webPath);
+  return webPath;
 }
 
 async function generatePhash(buffer) {

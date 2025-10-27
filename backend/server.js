@@ -5,6 +5,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/img/thumb', express.static(path.join(__dirname, 'img', 'thumb')));
 
 var corsOptions = {
   origin: "http://localhost:3000"

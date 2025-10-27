@@ -2,6 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import axios from "axios";
+import { ResultFragment } from './resultFragment.js';
 
 function App() {
   const [imgPreview, setPreview] = useState(null);
@@ -95,9 +96,19 @@ function App() {
           </div>
         )}
       </div>
-    </div>
 
-    
+      {/* render search results using fragments */}
+      {searchResults && (
+        <div className="search-results" style={{ marginTop: 18 }}>
+          {searchResults.length === 0
+            ? <div>No results</div>
+            : searchResults.map(result => (
+                <ResultFragment key={result.image.id} result={result} />
+              ))
+          }
+        </div>
+      )}
+    </div>
   );
 }
 
