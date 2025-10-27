@@ -74,3 +74,20 @@ exports.getOne = async (req, res) => {
     res.status(500).send({ message: err.message || "Error encountered!" });
   }
 };
+
+//generate hash and return to browser for subsequent searches
+exports.uploadImage = async (req, res) => {
+console.log("DEBUG: Received image upload for hashing.");
+try {
+    if (!req.file) {
+      return res.status(400).send({ message: "No file uploaded." });
+    }
+    const imageBuffer = req.file.buffer;
+    const phash = await generatePhash(imageBuffer);
+    const sha256 = await generateHash(imageBuffer);
+    res.send({ phash, sha256 });
+  } catch (err) {
+    console.error("Error processing uploaded image:", err);
+    res.status(500).send({ message: err.message || "Error encountered!" });
+  }
+};

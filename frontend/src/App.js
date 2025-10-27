@@ -1,9 +1,15 @@
 import logo from './logo.svg';
 import './App.css';
 import React, { useState, useEffect } from 'react';
+import axios from "axios";
 
 function App() {
   const [imgPreview, setPreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [hashes, setHashes] = useState(null);
+  const [searchResults, setSearchResults] = useState(null);
+  const [threshold, setThreshold] = useState(50);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
     return () => {
@@ -11,13 +17,58 @@ function App() {
     };
   }, [imgPreview]);
 
+  useEffect(() => {
+    if (hashes && hashes.phash) {
+      executeSearch();
+    }
+  }, [hashes]);
+
   const handleFileChange = (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
       if (imgPreview) URL.revokeObjectURL(imgPreview);
       setPreview(URL.createObjectURL(file));
+      setSelectedFile(file);
+      setHashes(null);
     } else {
       setPreview(null);
+      setSelectedFile(null);
+      setHashes(null);
+    }
+  };
+
+  const doFileUpload = async () => {
+    if (!selectedFile) {
+      console.warn("No file selected");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("userImage", selectedFile, selectedFile.name);
+    try {
+      console.log("DEBUG: Uploading file", selectedFile.name);
+      const resp = await axios.post("http://localhost:5000/api/upload", formData);
+      console.log("Upload response:", resp.data);
+      setHashes(resp.data || null);
+    } catch (err) {
+      console.error("Upload error:", err);
+      setHashes(null);
+    }
+  };
+
+  const executeSearch = async () => {
+    if (!hashes) {
+      console.warn("No hash data available for search");
+      return;
+    }
+    try {
+      console.log("DEBUG: Executing search with hashes", hashes);
+      const phash = encodeURIComponent(hashes.phash);
+      const resp = await axios.get(`http://localhost:5000/api/images/search/phash/${phash}?threshold=${threshold}&limit=${limit}`);
+      console.log("Search response:", resp.data);
+      setSearchResults(resp.data || null);
+    } catch (err) {
+      console.error("Search error:", err);
+      setSearchResults(null);
     }
   };
 
@@ -34,10 +85,19 @@ function App() {
         )}
         <p>Upload an image to get started!</p>
         <input type="file" name="userImage" accept="image/*" onChange={handleFileChange} />
-        <button className="fancybutton">Search</button>
+        <button className="fancybutton" onClick={doFileUpload}>Search</button>
+        {hashes && (
+          <div style={{ marginTop: 5, wordBreak: 'break-all', color: '#585858ff', fontSize: '14px' }}>
+            <div>
+            <strong>SHA256:</strong> <span>{hashes.sha256}</span>
+            </div>
+            <strong>P-Hash:</strong> <span>{hashes.phash}</span>
+          </div>
+        )}
       </div>
-
     </div>
+
+    
   );
 }
 

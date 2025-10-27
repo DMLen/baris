@@ -17,6 +17,7 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "image-hash": "^6.0.1",
+    "multer": "^2.0.2",
     "sequelize": "^6.37.7",
     "sharp": "^0.34.4",
     "sharp-phash": "^2.2.0",
