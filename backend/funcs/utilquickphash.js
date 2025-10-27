@@ -2,6 +2,8 @@ const fs = require('fs').promises;
 const readline = require('readline');
 const phash = require('sharp-phash');
 
+//a quick cli tool to find the phash of an image for testing purposes. this is not used directly by the app!!!
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -21,11 +23,8 @@ async function main() {
     rl.close();
 
     const buffer = await fs.readFile(imgPath.trim());
-    const perceptualHash = await phash(buffer); // returns hex representation
-    console.log('Perceptual Hash (hex):', perceptualHash);
-
-    const binaryStr = hexToBinary(perceptualHash.replace(/^0x/, ''));
-    console.log('Perceptual Hash (binary):', binaryStr);
+    const perceptualHash = await phash(buffer);
+    console.log('Perceptual Hash:', perceptualHash);
   } catch (err) {
     rl.close();
     console.error('Error:', err.message || err);
