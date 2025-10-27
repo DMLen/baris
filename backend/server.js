@@ -16,8 +16,10 @@ app.get('/api', (req, res) => {
 });
 
 const imageRouter = require("./routes/image.routes.js");
-//const hashRouter = require("./routes/hash.routes.js");
+const searchRouter = require("./routes/search.routes.js");
 imageRouter(app);
+searchRouter(app);
+
 //app.use('/api/hash', hashRouter);
 
 //sync db

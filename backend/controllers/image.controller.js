@@ -5,6 +5,8 @@ const Op = db.Sequelize.Op;
 
 const { getImageBuffer, getDimensions, saveThumb, generatePhash, generateHash } = require('../funcs/imageFunctions');
 
+//these controller functions relate to indexing new image records and retrieving them as well
+
 //index new image
 exports.create = async (req, res) => {
   const image = {
@@ -14,7 +16,7 @@ exports.create = async (req, res) => {
 
   try {
     //image data
-    const imageBuffer = await getImageBuffer(image.origin);
+    const imageBuffer = await getImageBuffer(image.origin); //download image to buffer
     const dimensions = await getDimensions(imageBuffer);
     const thumbPath = await saveThumb(imageBuffer);
     //hash data
@@ -49,9 +51,10 @@ exports.create = async (req, res) => {
 };
 
 //get all images
+//tbh this probably shouldnt exist but i want it anyway
 exports.getAll = (req, res) => {
   console.log("Retrieving all image records with hashes.");
-  Images.findAll({ include: [{ model: Hashes, as: 'hashes' }] })
+  Images.findAll({ include: [{ model: Hashes, as: 'hashes' }] }) 
     .then(data => { res.send(data); })
     .catch(err => { console.error("Error retrieving images with hashes:", err); res.status(500).send({ message: err.message || "Error encountered!" }); });
 };
