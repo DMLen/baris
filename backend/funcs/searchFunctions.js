@@ -9,6 +9,16 @@ const db = require("../models");
 const Images = db.images;
 const Hashes = db.hashes;
 
+function findHashes(img, type, value) {
+  if (!Array.isArray(img.hashes) || img.hashes.length === 0) return [];
+  return img.hashes.filter(h => {
+    if (!h || !h.hashType || typeof h.hashType !== 'string') return false;
+    if (!h.hashType.toLowerCase().includes(type.toLowerCase())) return false;
+    const hv = h.hashValue || h.hash;
+    return hv === value;
+  });
+}
+
 async function hammingDistance(hash1, hash2) {
   if (hash1.length !== hash2.length) {
     throw new Error("Mismatched hash length!");
@@ -50,8 +60,30 @@ async function findPhashMatchesBrute(iPhash, threshold, limit) {
   return matches.slice(0, limit);
 }
 
+//wip
 async function findMatchesMultiHash(sha256, dhash, phash, hammingThreshold, limit) {
+  const images = await Images.findAll({ include: [{ model: Hashes, as: 'hashes' }] });
+  const matches = [];
+  const maybe_matches = [];
+  for (const img of images) {
+    if (!Array.isArray(img.hashes) || img.hashes.length === 0) continue;
+    console.log(`DEBUG: Doing multi-hash search with SHA256: ${sha256}, DHash: ${dhash}, PHash: ${phash}, Hamming Threshold: ${hammingThreshold}, Limit: ${limit}`);
 
+  //first step: look for exact sha256 matches
+  const shaMatches = findHashes(img, 'sha256', sha256);
+    if (shaMatches.length > 0) {
+      matches.push({image: img});
+      continue;
+    }
+  }
+
+  //second step: calculate dhash hamming distances and add to "maybe" list
+
+  //third step: calculate phash hamming distances and add to "maybe" list
+
+  //fourth step: process "maybe": normalize hamming distances, make scoring system, sort by score, add top n results to matches
+
+  return matches.slice(0, limit);
 }
 
 module.exports = { findPhashMatchesBrute, hammingDistance, findMatchesMultiHash };
