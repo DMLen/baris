@@ -43,5 +43,5 @@ app.use((req, res, next) => {
 
 const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`BARIS backend server is running on port ${PORT}.`);
+  console.log(`BARISTA backend server is running on port ${PORT}.`);
 });

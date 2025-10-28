@@ -26,6 +26,10 @@ function App() {
     }
   }, [hashes]);
 
+  useEffect(() => {
+    document.title = 'B.A.R.I.S.T.A.';
+  }, []);
+
   const handleFileChange = (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
