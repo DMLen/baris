@@ -22,10 +22,11 @@ app.get('/api', (req, res) => {
   res.json({ message: 'Service is online!' });
 });
 
-const imageRouter = require("./routes/image.routes.js");
 const searchRouter = require("./routes/search.routes.js");
-imageRouter(app);
+const imageRouter = require("./routes/image.routes.js");
 searchRouter(app);
+imageRouter(app);
+
 
 //sync db
 const db = require('./models');

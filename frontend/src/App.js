@@ -70,7 +70,9 @@ function App() {
     try {
       console.log("DEBUG: Executing search with hashes", hashes);
       const phash = encodeURIComponent(hashes.phash);
-      const resp = await axios.get(`${API_BASE}/api/images/search/phash/${phash}?threshold=${threshold}&limit=${limit}`);
+      const dhash = encodeURIComponent(hashes.dhash);
+      const sha256 = encodeURIComponent(hashes.sha256);
+      const resp = await axios.get(`${API_BASE}/api/images/search/?sha256=${sha256}&dhash=${dhash}&phash=${phash}&threshold=${threshold}&limit=${limit}`);
       console.log("Search response:", resp.data);
       setSearchResults(resp.data || null);
     } catch (err) {

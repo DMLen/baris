@@ -9,8 +9,10 @@ export function ResultFragment({ result }) {
   const hashes = img.hashes || [];
   const phashObj = hashes.find(h => h.hashType === 'phash');
   const shaObj = hashes.find(h => h.hashType === 'sha256');
+  const dhashObj = hashes.find(h => h.hashType === 'dhash');
   const phash = phashObj ? phashObj.hashValue : (img.phash || '');
   const sha256 = shaObj ? shaObj.hashValue : (img.sha256 || '');
+  const dhash = dhashObj ? dhashObj.hashValue : (img.dhash || '');
 
   return (
     <>
@@ -27,6 +29,7 @@ export function ResultFragment({ result }) {
 
           <div style={{ marginTop: 8, fontSize: '8px', color: '#777' }}>
           <div><strong>SHA256:</strong> {sha256}</div>
+          <div><strong>D-Hash:</strong> {dhash}</div>
           <div><strong>P-Hash:</strong> {phash}</div>
           <div><strong>Indexed:</strong> {img.timestamp}</div>
           </div>
