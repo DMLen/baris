@@ -77,7 +77,9 @@ exports.getOne = async (req, res) => {
   }
 };
 
-//generate hash and return to browser for subsequent searches
+//generate hash and return to browser for subsequent searche operations
+//i made this its own endpoint so that the client can repeat searches with tweaked settings without needing to reupload images to the server every time
+//(hashes are stored on browser in a react state once per image)
 exports.uploadImage = async (req, res) => {
 console.log("DEBUG: Received image upload for hashing.");
 try {
@@ -87,7 +89,9 @@ try {
     const imageBuffer = req.file.buffer;
     const phash = await generatePhash(imageBuffer);
     const sha256 = await generateHash(imageBuffer);
-    res.send({ phash, sha256 });
+    const dhash = await generateDhash(imageBuffer);
+
+    res.send({ phash, sha256, dhash });
   } catch (err) {
     console.error("Error processing uploaded image:", err);
     res.status(500).send({ message: err.message || "Error encountered!" });
