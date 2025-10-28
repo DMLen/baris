@@ -116,3 +116,4 @@ Thumbs.db
 #shtuff
 /backend/img/thumb
 *.sqlite
+/frontend/build

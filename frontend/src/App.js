@@ -5,11 +5,13 @@ import axios from "axios";
 import { ResultFragment } from './resultFragment.js';
 
 function App() {
+  const API_BASE = process.env.REACT_APP_API_BASE || ''; //uses localhost:5000/api/ when developing, defaults to relative path for build
+
   const [imgPreview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [hashes, setHashes] = useState(null);
   const [searchResults, setSearchResults] = useState(null);
-  const [threshold, setThreshold] = useState(50);
+  const [threshold, setThreshold] = useState(10);
   const [limit, setLimit] = useState(10);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ function App() {
     formData.append("userImage", selectedFile, selectedFile.name);
     try {
       console.log("DEBUG: Uploading file", selectedFile.name);
-      const resp = await axios.post("http://localhost:5000/api/upload", formData);
+      const resp = await axios.post(`${API_BASE}/api/upload`, formData); //use localhost:5000/api/ in development, use /api/ for build
       console.log("Upload response:", resp.data);
       setHashes(resp.data || null);
     } catch (err) {
@@ -64,7 +66,7 @@ function App() {
     try {
       console.log("DEBUG: Executing search with hashes", hashes);
       const phash = encodeURIComponent(hashes.phash);
-      const resp = await axios.get(`http://localhost:5000/api/images/search/phash/${phash}?threshold=${threshold}&limit=${limit}`);
+      const resp = await axios.get(`${API_BASE}/api/images/search/phash/${phash}?threshold=${threshold}&limit=${limit}`);
       console.log("Search response:", resp.data);
       setSearchResults(resp.data || null);
     } catch (err) {
