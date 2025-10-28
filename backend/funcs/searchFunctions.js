@@ -62,28 +62,81 @@ async function findPhashMatchesBrute(iPhash, threshold, limit) {
 
 //wip
 async function findMatchesMultiHash(sha256, dhash, phash, hammingThreshold, limit) {
-  const images = await Images.findAll({ include: [{ model: Hashes, as: 'hashes' }] });
-  const matches = [];
-  const maybe_matches = [];
-  for (const img of images) {
-    if (!Array.isArray(img.hashes) || img.hashes.length === 0) continue;
-    console.log(`DEBUG: Doing multi-hash search with SHA256: ${sha256}, DHash: ${dhash}, PHash: ${phash}, Hamming Threshold: ${hammingThreshold}, Limit: ${limit}`);
+  const resultIds = []; //image ids that match or are within threshold
+  const matchingHashes = []; //potential matches within hamming threshold
+  console.log(`DEBUG: Doing multi-hash search with SHA256: ${sha256}, DHash: ${dhash}, PHash: ${phash}, Hamming Threshold: ${hammingThreshold}, Limit: ${limit}`);
 
-  //first step: look for exact sha256 matches
-  const shaMatches = findHashes(img, 'sha256', sha256);
-    if (shaMatches.length > 0) {
-      matches.push({image: img});
-      continue;
-    }
+  //first step: look for exact sha256 matches, store image id to matchid list
+  //this bypasses hamming distance calculations and scoring
+  const shaQuery = `SELECT * FROM Hashes WHERE hashType LIKE :ht AND hashValue = :hv`
+  const shaMatches = await db.sequelize.query(shaQuery, {
+    replacements: { ht: 'sha256', hv: sha256 },
+    type: db.sequelize.QueryTypes.SELECT
+  });
+  for (const match of shaMatches) {
+    resultIds.push(match.imageId);
+    console.log(`DEBUG: Found exact SHA256 match - Image ID: ${match.imageId}`);
   }
 
-  //second step: calculate dhash hamming distances and add to "maybe" list
+  //second step: calculate dhash hamming distances and add to "maybe" fuzzy list
+  const dhashQuery = `SELECT * FROM Hashes WHERE hashType LIKE :ht`
+  const dhashes = await db.sequelize.query(dhashQuery, {
+    replacements: { ht: 'dhash' },
+    type: db.sequelize.QueryTypes.SELECT
+  });
+  for (const result of dhashes) {
+    const hammingDist = await hammingDistance(dhash, result.hashValue);
+    if (hammingDist <= hammingThreshold) {
+      matchingHashes.push({ imageId: result.imageId, hammingDistance: hammingDist, type: 'dhash' });
+      console.log(`DEBUG: Found fuzzy DHash match - Image ID: ${result.imageId}, Hamming Distance: ${hammingDist}`);
+    }
+  }
+  console.log("DEBUG: matchingHashes after second step:", matchingHashes);
 
-  //third step: calculate phash hamming distances and add to "maybe" list
+  //third step: calculate phash hamming distances and add to "maybe" fuzzy list
+    const phashQuery = `SELECT * FROM Hashes WHERE hashType LIKE :ht`
+  const phashes = await db.sequelize.query(phashQuery, {
+    replacements: { ht: 'phash' },
+    type: db.sequelize.QueryTypes.SELECT
+  });
+  for (const result of phashes) {
+    const hammingDist = await hammingDistance(phash, result.hashValue);
+    if (hammingDist <= hammingThreshold) {
+      matchingHashes.push({ imageId: result.imageId, hammingDistance: hammingDist, type: 'phash' });
+      console.log(`DEBUG: Found fuzzy PHash match - Image ID: ${result.imageId}, Hamming Distance: ${hammingDist}`);
+    }
+  }
+ console.log("DEBUG: matchingHashes after third step:", matchingHashes);
+    //example:
+    //DEBUG: matchingHashes after third step: [
+    //{ imageId: 1, hammingDistance: 2, type: 'dhash' },
+    //{ imageId: 1, hammingDistance: 0, type: 'phash' }
+    //]
 
-  //fourth step: process "maybe": normalize hamming distances, make scoring system, sort by score, add top n results to matches
+  //fourth step: process fuzzy list: combine dhash and phash distances into some kind of score, sort by score for overall accuracy
+  const weights = { phash: 0.5, dhash: 0.5 };
+  const scores = {}; //imageId -> score
+  
+  for (const match of matchingHashes) {
+    const { imageId, hammingDistance, type } = match;
+    const weight = weights[type];
+    scores[imageId] = (scores[imageId] || 0) + (weight * (1 / (hammingDistance + 1)));
+  }
 
-  return matches.slice(0, limit);
+  // Sort scores by highest first
+  const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  console.log("DEBUG: Sorted scores:", sortedScores);
+  resultIds.push(...sortedScores.map(([imageId, score]) => parseInt(imageId)));
+
+
+  //fifth step: retrieve images by match ids and return
+  const resultImages = await Images.findAll({
+    where: { id: resultIds },
+    include: [{ model: Hashes, as: 'hashes' }]
+  });
+
+  return resultImages.slice(0, limit);
 }
+
 
 module.exports = { findPhashMatchesBrute, hammingDistance, findMatchesMultiHash };
