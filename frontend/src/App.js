@@ -98,7 +98,12 @@ function App() {
             <div>
             <strong>SHA256:</strong> <span>{hashes.sha256}</span>
             </div>
+            <div>
+            <strong>D-Hash:</strong> <span>{hashes.dhash}</span>
+            </div>
+            <div>
             <strong>P-Hash:</strong> <span>{hashes.phash}</span>
+            </div>
           </div>
         )}
       </div>
