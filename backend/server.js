@@ -5,7 +5,13 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+//serve file thumbnails as url
 app.use('/img/thumb', express.static(path.join(__dirname, 'img', 'thumb')));
+
+//serve built frontend
+const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'build');
+app.use(express.static(frontendBuildPath));
 
 var corsOptions = {
   origin: "http://localhost:3000"
@@ -21,14 +27,18 @@ const searchRouter = require("./routes/search.routes.js");
 imageRouter(app);
 searchRouter(app);
 
-//app.use('/api/hash', hashRouter);
-
 //sync db
 const db = require('./models');
 db.sequelize.sync().then(() => {
   console.log('Database synced');
 }).catch(err => {
   console.error('DB sync error:', err);
+});
+
+//fallback route
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/img/thumb')) return next();
+  res.sendFile(path.join(frontendBuildPath, 'index.html'));
 });
 
 const PORT = 5000;
