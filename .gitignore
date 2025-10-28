@@ -117,3 +117,4 @@ Thumbs.db
 /backend/img/thumb
 *.sqlite
 /frontend/build
+/companion/scraper.py
