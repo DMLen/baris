@@ -3,7 +3,7 @@ const Images = db.images;
 const Hashes = db.hashes;
 const Op = db.Sequelize.Op;
 
-const { getImageBuffer, getDimensions, saveThumb, generatePhash, generateHash } = require('../funcs/imageFunctions');
+const { getImageBuffer, getDimensions, saveThumb, generatePhash, generateHash, generateDhash } = require('../funcs/imageFunctions');
 
 //these controller functions relate to indexing new image records and retrieving them as well
 
@@ -22,6 +22,7 @@ exports.create = async (req, res) => {
     //hash data
     const phash = await generatePhash(imageBuffer);
     const sha256 = generateHash(imageBuffer);
+    const dhash = await generateDhash(imageBuffer);
 
     //set data fields for image record
     image.thumbnailPath = thumbPath;
@@ -34,7 +35,8 @@ exports.create = async (req, res) => {
 
       const hashValues = [
         { imageId: created.id, hashType: 'phash', hashValue: phash },
-        { imageId: created.id, hashType: 'sha256', hashValue: sha256 }
+        { imageId: created.id, hashType: 'sha256', hashValue: sha256 },
+        { imageId: created.id, hashType: 'dhash', hashValue: dhash }
       ];
       await Hashes.bulkCreate(hashValues, { transaction });
 

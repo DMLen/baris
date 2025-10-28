@@ -45,4 +45,26 @@ function generateHash(buffer) {
   return sha256;
 }
 
-module.exports = { getImageBuffer, getDimensions, saveThumb, generatePhash, generateHash };
+//https://www.hackerfactor.com/blog/index.php?/archives/529-Kind-of-Like-That.html
+async function generateDhash(buffer, columns = 9, rows = 8) {
+  //reduce colour and size before processing bits
+  const raw = await sharp(buffer)
+    .grayscale()
+    .resize(columns, rows)
+    .raw()
+    .toBuffer();
+  
+
+  let bits = '';
+  for (let y = 0; y < rows; y++) { //iterate rows, start top-left
+    for (let x = 0; x < columns - 1; x++) { //iterate columns
+      const i = y * columns + x; //get index
+      bits += raw[i] > raw[i + 1] ? '1' : '0'; //if current pixel i brighter than i+1, set bit to 1, else 0, before appending
+    }
+  }
+
+  console.log("DEBUG: Generated dhash:", bits);
+  return bits;
+}
+
+module.exports = { getImageBuffer, getDimensions, saveThumb, generatePhash, generateHash, generateDhash };
