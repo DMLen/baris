@@ -9,12 +9,18 @@ const db = require("../models");
 const Images = db.images;
 const Hashes = db.hashes;
 
+async function hammingDistance(hash1, hash2) {
+  if (hash1.length !== hash2.length) {
+    throw new Error("Mismatched hash length!");
+  }
+  let distance = 0;
+  for (let i = 0; i < hash1.length; i++) {
+    if (hash1[i] !== hash2[i]) distance++;
+  }
+  return distance;
+}
 
-
-//find nearest phash matches, stupid function ill make it efficient later
-//iPhash = input perceptual hash
-//threshold = max hamming distance for returned matches
-//limit = max number of returned matches (will return closest matches up to this number)
+//find nearest phash matches, very basic and not super effective
 async function findPhashMatchesBrute(iPhash, threshold, limit) {
   const images = await Images.findAll({ include: [{ model: Hashes, as: 'hashes' }] });
   const matches = [];
@@ -44,4 +50,8 @@ async function findPhashMatchesBrute(iPhash, threshold, limit) {
   return matches.slice(0, limit);
 }
 
-module.exports = { findPhashMatchesBrute };
+async function findMatchesMultiHash(sha256, dhash, phash, hammingThreshold, limit) {
+
+}
+
+module.exports = { findPhashMatchesBrute, hammingDistance, findMatchesMultiHash };
