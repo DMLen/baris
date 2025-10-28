@@ -115,9 +115,11 @@ function App() {
         <div className="search-results" style={{ marginTop: 18 }}>
           {searchResults.length === 0
             ? <div>No results</div>
-            : searchResults.map(result => (
-                <ResultFragment key={result.image.id} result={result} />
-              ))
+            : searchResults.map((result, idx) => {
+                const fallback = (result && result.image) ? result : { image: result, hammingDistance: null };
+                const key = (fallback.image && fallback.image.id) ? fallback.image.id : idx;
+                return <ResultFragment key={key} result={fallback} />;
+              })
           }
         </div>
       )}
