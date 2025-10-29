@@ -62,76 +62,67 @@ async function findPhashMatchesBrute(iPhash, threshold, limit) {
 
 //wip
 async function findMatchesMultiHash(sha256, dhash, phash, hammingThreshold, limit) {
-  const resultIds = []; //image ids that match or are within threshold
-  const matchingHashes = []; //potential matches within hamming threshold
   console.log(`DEBUG: Doing multi-hash search with SHA256: ${sha256}, DHash: ${dhash}, PHash: ${phash}, Hamming Threshold: ${hammingThreshold}, Limit: ${limit}`);
 
-  //first step: look for exact sha256 matches, store image id to matchid list
-  //this bypasses hamming distance calculations and scoring
-  const shaQuery = `SELECT * FROM Hashes WHERE hashType LIKE :ht AND hashValue = :hv`
-  const shaMatches = await db.sequelize.query(shaQuery, {
-    replacements: { ht: 'sha256', hv: sha256 },
-    type: db.sequelize.QueryTypes.SELECT
-  });
+  const shaQuery = `SELECT * FROM Hashes WHERE hashType LIKE :ht AND hashValue = :hv`;
+  const dhashQuery = `SELECT * FROM Hashes WHERE hashType LIKE :ht`;
+  const phashQuery = `SELECT * FROM Hashes WHERE hashType LIKE :ht`;
+
+  //run DB queries in parallel
+  //1. get all hash records that exactly match sha256 (will find any identical images in db)
+  //2. get all dhash records
+  //3. get all phash records
+  const [shaMatches, dhashes, phashes] = await Promise.all([
+    db.sequelize.query(shaQuery, {
+      replacements: { ht: 'sha256', hv: sha256 },
+      type: db.sequelize.QueryTypes.SELECT
+    }),
+    db.sequelize.query(dhashQuery, {
+      replacements: { ht: 'dhash' },
+      type: db.sequelize.QueryTypes.SELECT
+    }),
+    db.sequelize.query(phashQuery, {
+      replacements: { ht: 'phash' },
+      type: db.sequelize.QueryTypes.SELECT
+    })
+  ]);
+
+  const idSet = new Set();
   for (const match of shaMatches) {
-    resultIds.push(match.imageId);
+    idSet.add(match.imageId);
     console.log(`DEBUG: Found exact SHA256 match - Image ID: ${match.imageId}`);
   }
 
-  //second step: calculate dhash hamming distances and add to "maybe" fuzzy list
-  const dhashQuery = `SELECT * FROM Hashes WHERE hashType LIKE :ht`
-  const dhashes = await db.sequelize.query(dhashQuery, {
-    replacements: { ht: 'dhash' },
-    type: db.sequelize.QueryTypes.SELECT
-  });
-  for (const result of dhashes) {
-    const hammingDist = await hammingDistance(dhash, result.hashValue);
+  //compute hamming distances for dhash in parallel
+  const dhashMatches = await Promise.all(dhashes.map(async (r) => {
+    const hammingDist = await hammingDistance(dhash, r.hashValue);
     if (hammingDist <= hammingThreshold) {
-      matchingHashes.push({ imageId: result.imageId, hammingDistance: hammingDist, type: 'dhash' });
-      console.log(`DEBUG: Found fuzzy DHash match - Image ID: ${result.imageId}, Hamming Distance: ${hammingDist}`);
+      console.log(`DEBUG: Found fuzzy DHash match - Image ID: ${r.imageId}, Hamming Distance: ${hammingDist} (${r.hashValue})`);
+      return { imageId: r.imageId, hammingDistance: hammingDist, type: 'dhash' };
     }
-  }
-  console.log("DEBUG: matchingHashes after second step:", matchingHashes);
+    return null;
+  }));
 
-  //third step: calculate phash hamming distances and add to "maybe" fuzzy list
-    const phashQuery = `SELECT * FROM Hashes WHERE hashType LIKE :ht`
-  const phashes = await db.sequelize.query(phashQuery, {
-    replacements: { ht: 'phash' },
-    type: db.sequelize.QueryTypes.SELECT
-  });
-  for (const result of phashes) {
-    const hammingDist = await hammingDistance(phash, result.hashValue);
+  //compute hamming distances for phash in parallel
+  const phashMatches = await Promise.all(phashes.map(async (r) => {
+    const hammingDist = await hammingDistance(phash, r.hashValue);
     if (hammingDist <= hammingThreshold) {
-      matchingHashes.push({ imageId: result.imageId, hammingDistance: hammingDist, type: 'phash' });
-      console.log(`DEBUG: Found fuzzy PHash match - Image ID: ${result.imageId}, Hamming Distance: ${hammingDist}`);
+      console.log(`DEBUG: Found fuzzy PHash match - Image ID: ${r.imageId}, Hamming Distance: ${hammingDist} (${r.hashValue})`);
+      return { imageId: r.imageId, hammingDistance: hammingDist, type: 'phash' };
     }
-  }
- console.log("DEBUG: matchingHashes after third step:", matchingHashes);
-    //example:
-    //DEBUG: matchingHashes after third step: [
-    //{ imageId: 1, hammingDistance: 2, type: 'dhash' },
-    //{ imageId: 1, hammingDistance: 0, type: 'phash' }
-    //]
+    return null;
+  }));
 
-  //fourth step: process fuzzy list: combine dhash and phash distances into some kind of score, sort by score for overall accuracy
-  const weights = { phash: 0.5, dhash: 0.5 };
-  const scores = {}; //imageId -> score
-  
-  for (const match of matchingHashes) {
-    const { imageId, hammingDistance, type } = match;
-    const weight = weights[type];
-    scores[imageId] = (scores[imageId] || 0) + (weight * (1 / (hammingDistance + 1)));
-  }
+  const matchingHashes = [...dhashMatches, ...phashMatches].filter(Boolean);
+  console.log("DEBUG: matchingHashes combined:", matchingHashes);
 
-  // Sort scores by highest first
-  const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-  console.log("DEBUG: Sorted scores:", sortedScores);
-  resultIds.push(...sortedScores.map(([imageId, score]) => parseInt(imageId)));
+  //add matched ids and fetch images
+  for (const m of matchingHashes) idSet.add(m.imageId);
+  const finalIds = Array.from(idSet);
+  console.log("DEBUG: final matched image IDs:", finalIds);
 
-
-  //fifth step: retrieve images by match ids and return
   const resultImages = await Images.findAll({
-    where: { id: resultIds },
+    where: { id: finalIds },
     include: [{ model: Hashes, as: 'hashes' }]
   });
 
