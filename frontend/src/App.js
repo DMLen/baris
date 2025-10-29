@@ -112,7 +112,7 @@ function App() {
 
       {/* render search results using fragments */}
       {searchResults && (
-        <div className="search-results" style={{ marginTop: 18 }}>
+        <div className="search-results" style={{ marginTop: 18, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {searchResults.length === 0
             ? <div>No results</div>
             : searchResults.map((result, idx) => {

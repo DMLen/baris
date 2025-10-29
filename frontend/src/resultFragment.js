@@ -16,7 +16,7 @@ export function ResultFragment({ result }) {
 
   return (
     <>
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', border: '2px solid #898989ff', padding: 12, marginBottom: 12 }}>
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', border: '2px solid #898989ff', padding: 12, marginBottom: 12, maxWidth: '1000px', width: '100%', boxSizing: 'border-box' }}>
       <div>
         {thumbUrl && (<img src={thumbUrl} alt={`thumb-${img.id}`} />)}
       </div>
