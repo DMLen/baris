@@ -11,7 +11,7 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [hashes, setHashes] = useState(null);
   const [searchResults, setSearchResults] = useState(null);
-  const [threshold, setThreshold] = useState(10);
+  const [threshold, setThreshold] = useState(25);
   const [limit, setLimit] = useState(10);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ function App() {
   }, [hashes]);
 
   useEffect(() => {
-    document.title = 'B.A.R.I.S.T.A.';
+    document.title = 'BARISTA';
   }, []);
 
   const handleFileChange = (e) => {
