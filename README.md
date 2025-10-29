@@ -1,5 +1,6 @@
 # B.A.R.I.S.T.A. (WIP)
 ### Basic-Arse Reverse Image Search Tool (Amazing)
+![Alt text here](https://i.imgur.com/pBKjMsD.png)
 **BARISTA** is my attempt at a reverse image search tool that is powered by hashing. If you remember from class, hashing algorithms like SHA256 will produce a completely unique hash for each image and file, with huge differences in the resulting hash even if only a small amount of file/image data has been changed. Algorithms such as **Perceptual Hash** and **Difference Hash** do the opposite, they will still give an identical (or similar) hash if small amounts of image data have been changed. We can take advantage of this to discover other files that have *some similarity*.
 
 BARISTA is a self-contained Javascript web application that handles a SQLite database accessible through an API and through a browser GUI.
